@@ -10,11 +10,16 @@ from dateutil.tz import tzlocal
 from strands_executive_msgs.msg import Task
 from strands_executive_msgs import task_utils
 
+f = open('jokes.txt','r')
+jokes = [x.strip() for x in f.read().split('%%')]
+
 def tell_joke_at_waypoint(wp):
     task = Task()
     task.action = '/speak'
 
-    task_utils.add_string_argument(task, "I am telling a joke.  Please smile or I will be sad")
+    joke = random.choice(jokes)
+    joke_text = "I am telling a joke" + joke + "Please smile or I will be said"
+    task_utils.add_string_argument(task, joke_text)
 
     max_wait_secs = 60
     task.max_duration = rospy.Duration(max_wait_secs)
