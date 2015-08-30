@@ -48,7 +48,7 @@ class ExampleRoutine(RobotRoutine):
 
 if __name__ == '__main__':
 
-    rospy.init_node('tutorial_4')
+    rospy.init_node('routine1')
 
     # start and end times -- all times should be in local timezone
     localtz = tzlocal()
