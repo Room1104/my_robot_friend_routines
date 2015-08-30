@@ -12,9 +12,9 @@ from strands_executive_msgs import task_utils
 
 def tell_joke_at_waypoint(wp):
     task = Task()
-    task.action = '/joke_node'
+    task.action = '/speak'
 
-    task_utils.add_string_argument(task, "I am telling a joke.  Please smile or I will be said")
+    task_utils.add_string_argument(task, "I am telling a joke.  Please smile or I will be sad")
 
     max_wait_secs = 60
     task.max_duration = rospy.Duration(max_wait_secs)
