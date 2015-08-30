@@ -18,7 +18,7 @@ def tell_joke_at_waypoint(wp):
     task.action = '/speak'
 
     joke = random.choice(jokes)
-    joke_text = "I am telling a joke" + joke + "Please smile or I will be said"
+    joke_text = "I will tell a joke." + joke + "Please smile or I will be said"
     task_utils.add_string_argument(task, joke_text)
 
     max_wait_secs = 60
