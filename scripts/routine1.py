@@ -10,6 +10,21 @@ from dateutil.tz import tzlocal
 from strands_executive_msgs.msg import Task
 from strands_executive_msgs import task_utils
 
+def tell_joke_at_waypoint(wp):
+    task = Task()
+    task.action = '/joke_node'
+
+    task_utils.add_string_argument(task, "I am telling a joke.  Please smile or I will be said")
+
+    max_wait_secs = 60
+    task.max_duration = rospy.Duration(max_wait_secs)
+
+    task.start_after = rospy.get_rostime() + rospy.Duration(10)
+    task.end_before = task.start_after + rospy.Duration(200)
+
+    task.start_node_id = wp
+    task.end_node_id = wp
+    return task
 
 class ExampleRoutine(RobotRoutine):
     """ Creates a routine which simply visits nodes. """
@@ -17,6 +32,7 @@ class ExampleRoutine(RobotRoutine):
     def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint'):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point)
+
 
     def wait_task_at_waypoint(thisclass, wp):
         task = Task()
@@ -42,6 +58,8 @@ class ExampleRoutine(RobotRoutine):
         """
             Called when the routine is idle. Default is to trigger travel to the charging. As idleness is determined by the current schedule, if this call doesn't utlimately cause a task schedule to be generated this will be called repeatedly.
         """
+        joke_task = tell_joke_at_waypoint('WayPoint2')
+        self.add_tasks([joke_task])
         rospy.loginfo('I am idle')    
 
 
@@ -56,7 +74,7 @@ if __name__ == '__main__':
     end = time(20,00, tzinfo=localtz)
 
     # how long to stand idle before doing something
-    idle_duration=rospy.Duration(20)
+    idle_duration=rospy.Duration(10)
 
     routine = ExampleRoutine(daily_start=start, daily_end=end, idle_duration=idle_duration)    
 

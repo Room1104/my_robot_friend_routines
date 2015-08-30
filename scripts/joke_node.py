@@ -26,7 +26,7 @@ class JokeServer(AbstractTaskServer):
         return t
 
     def execute(self, goal):
-
+        rospy.loginfo("telling a joke")
         self.server.set_succeeded()
 
 
