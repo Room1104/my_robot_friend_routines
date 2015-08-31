@@ -90,7 +90,7 @@ if __name__ == '__main__':
     end = time(20,00, tzinfo=localtz)
 
     # how long to stand idle before doing something
-    idle_duration=rospy.Duration(10)
+    idle_duration=rospy.Duration(180)
 
     routine = ExampleRoutine(daily_start=start, daily_end=end, idle_duration=idle_duration)    
 
