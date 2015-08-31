@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import random
 
 from routine_behaviours.robot_routine import RobotRoutine
 
@@ -10,15 +11,36 @@ from dateutil.tz import tzlocal
 from strands_executive_msgs.msg import Task
 from strands_executive_msgs import task_utils
 
+import geometry_msgs
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
+
+from mongodb_store.message_store import MessageStoreProxy
+msg_store = MessageStoreProxy()
+
 f = open('jokes.txt','r')
 jokes = [x.strip() for x in f.read().split('%%')]
 
-def tell_joke_at_waypoint(wp):
+def move_to(pose):
+    task = Task()
+    task.action = '/move_base'
+    xin = pose.pose.position.x
+    y = pose.pose.position.y
+    z = pose.pose.position.z
+    x = xin - 1
+    poseout = pose
+    poseout.pose.position.x = x
+    object_id = msg_store.insert(poseout)
+    task_utils.add_object_id_argument(task, object_id, PoseStamped)
+    return task
+    
+
+def tell_joke():
     task = Task()
     task.action = '/speak'
 
     joke = random.choice(jokes)
-    joke_text = "I will tell a joke." + joke + "Please smile or I will be said"
+    joke_text = "I will tell a joke." + joke + "Please smile or I will be sad."
     task_utils.add_string_argument(task, joke_text)
 
     max_wait_secs = 60
@@ -27,8 +49,6 @@ def tell_joke_at_waypoint(wp):
     task.start_after = rospy.get_rostime() + rospy.Duration(10)
     task.end_before = task.start_after + rospy.Duration(200)
 
-    task.start_node_id = wp
-    task.end_node_id = wp
     return task
 
 class ExampleRoutine(RobotRoutine):
@@ -38,24 +58,6 @@ class ExampleRoutine(RobotRoutine):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point)
 
-
-    def wait_task_at_waypoint(thisclass, wp):
-        task = Task()
-        task.action = '/wait_action'
-
-        max_wait_secs = 10
-        task.max_duration = rospy.Duration(max_wait_secs)
-
-        task_utils.add_time_argument(task, rospy.Time())
-        task_utils.add_duration_argument(task, rospy.Duration(10))
-
-        task.start_after = rospy.get_rostime() + rospy.Duration(10)
-        task.end_before = task.start_after + rospy.Duration(200)
-
-        task.start_node_id = wp
-        task.end_node_id = wp
-        return task
-
     def create_routine(self):
         pass
 
@@ -63,8 +65,17 @@ class ExampleRoutine(RobotRoutine):
         """
             Called when the routine is idle. Default is to trigger travel to the charging. As idleness is determined by the current schedule, if this call doesn't utlimately cause a task schedule to be generated this will be called repeatedly.
         """
-        joke_task = tell_joke_at_waypoint('WayPoint2')
-        self.add_tasks([joke_task])
+        pose = rospy.wait_for_message("/people_tracker/pose", geometry_msgs.msg.PoseStamped)
+
+        if (pose.pose.position.x == 0 and pose.pose.position.y == 0 and pose.pose.position.z):
+            rospy.loginfo('Can not see anyone')
+        else:
+            rospy.loginfo('Calculating move_base')
+            move_task = move_to(pose)
+            rospy.loginfo('Calculating tell_joke')
+            joke_task = tell_joke()
+            rospy.loginfo('Calculating scheulding tasks')
+            self.add_tasks([move_task, joke_task])
         rospy.loginfo('I am idle')    
 
 
